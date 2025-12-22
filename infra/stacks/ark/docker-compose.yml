@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  ark-server:
+    image: acekorneya/ark_ascended_docker:latest
+    container_name: ark-server
+    restart: unless-stopped
+    ports:
+      - "7777:7777/udp"
+      - "7778:7778/udp"
+      - "27015:27015/udp"
+    environment:
+      - GAME_PORT=7777
+      - QUERY_PORT=27015
+      - RCON_PORT=27020
+      - SERVER_PASSWORD=
+      - ADMIN_PASSWORD=adminpass
+    volumes:
+      - ark_data:/ark
+
+volumes:
+  ark_data:
