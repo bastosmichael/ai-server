@@ -1,0 +1,37 @@
+name: Infra CI
+
+on:
+  push:
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yml"
+  pull_request:
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yml"
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform fmt (lint)
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (build)
+        run: terraform init -backend=false
+
+      - name: Terraform validate (test)
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -input=false -lock=false -refresh=false
