@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  aoe2de-server:
+    image: ich777/ageofempires2de:latest
+    container_name: aoe2de-server
+    restart: unless-stopped
+    ports:
+      - "27015:27015/udp"
+      - "27016:27016/udp"
+    environment:
+      - GAME_PORT=27015
+      - QUERY_PORT=27016
+    volumes:
+      - aoe2de_data:/serverdata
+
+volumes:
+  aoe2de_data:

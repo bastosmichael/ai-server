@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  starbound-server:
+    image: linuxserver/starbound:latest
+    container_name: starbound-server
+    restart: unless-stopped
+    ports:
+      - "21025:21025/tcp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MAXPLAYERS=16
+    volumes:
+      - starbound_data:/config
+
+volumes:
+  starbound_data:

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  satisfactory-server:
+    image: wolveix/satisfactory-server:latest
+    container_name: satisfactory-server
+    restart: unless-stopped
+    ports:
+      - "7777:7777/udp"
+      - "15000:15000/udp"
+      - "15777:15777/udp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MAXPLAYERS=8
+    volumes:
+      - satisfactory_data:/config
+
+volumes:
+  satisfactory_data:

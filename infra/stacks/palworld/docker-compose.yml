@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  palworld-server:
+    image: thijsvanloef/palworld-server-docker:latest
+    container_name: palworld-server
+    restart: unless-stopped
+    ports:
+      - "8211:8211/udp"
+      - "27015:27015/udp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - SERVER_NAME=Palworld Server
+    volumes:
+      - palworld_data:/palworld
+
+volumes:
+  palworld_data:

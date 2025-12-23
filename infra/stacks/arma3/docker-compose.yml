@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  arma3-server:
+    image: cm2network/arma3server:latest
+    container_name: arma3-server
+    restart: unless-stopped
+    ports:
+      - "2302:2302/udp"
+      - "2303:2303/udp"
+      - "2304:2304/udp"
+      - "2305:2305/udp"
+    environment:
+      - PORT=2302
+      - STEAM_BRANCH=public
+    volumes:
+      - arma3_data:/home/steam/arma3
+
+volumes:
+  arma3_data:

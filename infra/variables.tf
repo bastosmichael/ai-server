@@ -46,6 +46,84 @@ variable "enable_plex" {
   default     = false
 }
 
+variable "enable_tf2" {
+  description = "Enable Team Fortress 2 server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_garrysmod" {
+  description = "Enable Garry's Mod server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_insurgency_sandstorm" {
+  description = "Enable Insurgency: Sandstorm server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_squad" {
+  description = "Enable Squad server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_squad44" {
+  description = "Enable Squad 44 server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_satisfactory" {
+  description = "Enable Satisfactory server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_factorio" {
+  description = "Enable Factorio server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_eco" {
+  description = "Enable Eco server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_space_engineers" {
+  description = "Enable Space Engineers server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_starbound" {
+  description = "Enable Starbound server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_aoe2de" {
+  description = "Enable Age of Empires II: Definitive Edition server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_palworld" {
+  description = "Enable Palworld server deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_arma3" {
+  description = "Enable Arma 3 server deployment"
+  type        = bool
+  default     = false
+}
+
 # Server Configuration Variables
 variable "ark_server_password" {
   description = "ARK server password (leave empty for no password)"

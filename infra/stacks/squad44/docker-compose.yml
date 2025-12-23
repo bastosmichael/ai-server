@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  squad44-server:
+    image: wolveix/post-scriptum-server:latest
+    container_name: squad44-server
+    restart: unless-stopped
+    ports:
+      - "10027:10027/udp"
+      - "10037:10037/udp"
+    environment:
+      - PORT=10027
+      - QUERYPORT=10037
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - squad44_data:/home/steam/postscriptum-dedicated
+
+volumes:
+  squad44_data:

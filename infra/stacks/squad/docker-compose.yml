@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  squad-server:
+    image: wolveix/squad-server:latest
+    container_name: squad-server
+    restart: unless-stopped
+    ports:
+      - "7787:7787/udp"
+      - "27165:27165/udp"
+    environment:
+      - PORT=7787
+      - QUERYPORT=27165
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - squad_data:/home/steam/squad-dedicated
+
+volumes:
+  squad_data:

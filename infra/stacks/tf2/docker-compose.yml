@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  tf2-server:
+    image: cm2network/tf2:latest
+    container_name: tf2-server
+    restart: unless-stopped
+    ports:
+      - "27015:27015/tcp"
+      - "27015:27015/udp"
+    environment:
+      - SRCDS_TOKEN=
+      - SRCDS_HOSTNAME=Team Fortress 2 Server
+      - SRCDS_MAXPLAYERS=24
+      - SRCDS_MAP=koth_viaduct
+    volumes:
+      - tf2_data:/home/steam/tf-dedicated
+
+volumes:
+  tf2_data:

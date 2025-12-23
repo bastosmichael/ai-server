@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  insurgency-sandstorm-server:
+    image: cm2network/insurgency:sandstorm
+    container_name: insurgency-sandstorm-server
+    restart: unless-stopped
+    ports:
+      - "27102:27102/udp"
+      - "27131:27131/udp"
+    environment:
+      - SRCDS_TOKEN=
+      - PORT=27102
+      - QUERYPORT=27131
+    volumes:
+      - sandstorm_data:/home/steam/insurgency
+
+volumes:
+  sandstorm_data:

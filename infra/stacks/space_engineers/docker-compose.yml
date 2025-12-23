@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  space-engineers-server:
+    image: mmmaxwwwell/se-dedicated-server:latest
+    container_name: space-engineers-server
+    restart: unless-stopped
+    ports:
+      - "27016:27016/udp"
+      - "8766:8766/udp"
+    environment:
+      - INSTANCE_NAME=Space Engineers
+    volumes:
+      - space_engineers_data:/appdata/SpaceEngineersDedicated
+
+volumes:
+  space_engineers_data:

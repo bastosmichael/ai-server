@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  eco-server:
+    image: ich777/eco:latest
+    container_name: eco-server
+    restart: unless-stopped
+    ports:
+      - "3000:3000/tcp"
+      - "3001:3001/udp"
+    environment:
+      - GAME_PORT=3000
+      - QUERY_PORT=3001
+    volumes:
+      - eco_data:/serverdata
+
+volumes:
+  eco_data:
