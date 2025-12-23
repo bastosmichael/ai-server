@@ -13,9 +13,9 @@ provider "null" {}
 
 resource "null_resource" "bootstrap_docker" {
   connection {
-    type        = "ssh"
-    host        = replace(var.docker_host, "ssh://michael@", "") # Extract IP from docker_host string
-    user        = "michael"
+    type = "ssh"
+    host = replace(var.docker_host, "ssh://michael@", "") # Extract IP from docker_host string
+    user = "michael"
     # Agent is used automatically
   }
 
@@ -53,9 +53,9 @@ resource "null_resource" "deploy_stacks" {
   depends_on = [null_resource.bootstrap_docker]
 
   connection {
-    type        = "ssh"
-    host        = replace(var.docker_host, "ssh://michael@", "")
-    user        = "michael"
+    type = "ssh"
+    host = replace(var.docker_host, "ssh://michael@", "")
+    user = "michael"
   }
 
   # Copy Compose Files
