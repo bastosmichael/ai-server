@@ -52,77 +52,52 @@ resource "null_resource" "bootstrap_docker" {
 resource "null_resource" "deploy_stacks" {
   depends_on = [null_resource.bootstrap_docker]
 
-  connection {
-    type = "ssh"
-    host = replace(var.docker_host, "ssh://michael@", "")
-    user = "michael"
-  }
+  provisioner "local-exec" {
+    command = <<EOT
+      # Define HOST and USER
+      HOST="${replace(var.docker_host, "ssh://michael@", "")}"
+      USER="michael"
 
-  # Copy Compose Files
-  provisioner "file" {
-    source      = "${path.module}/stacks/portainer/docker-compose.yml"
-    destination = "/tmp/portainer.docker-compose.yml"
-  }
-  provisioner "file" {
-    source      = "${path.module}/stacks/ollama/docker-compose.yml"
-    destination = "/tmp/ollama.docker-compose.yml"
-  }
-  provisioner "file" {
-    source      = "${path.module}/stacks/rust/docker-compose.yml"
-    destination = "/tmp/rust.docker-compose.yml"
-  }
-  provisioner "file" {
-    source      = "${path.module}/stacks/ark/docker-compose.yml"
-    destination = "/tmp/ark.docker-compose.yml"
-  }
-  provisioner "file" {
-    source      = "${path.module}/stacks/cs2/docker-compose.yml"
-    destination = "/tmp/cs2.docker-compose.yml"
-  }
-  provisioner "file" {
-    source      = "${path.module}/stacks/minecraft/docker-compose.yml"
-    destination = "/tmp/minecraft.docker-compose.yml"
-  }
-  provisioner "file" {
-    source      = "${path.module}/stacks/plex/docker-compose.yml"
-    destination = "/tmp/plex.docker-compose.yml"
-  }
+      # Copy Compose Files via SCP (renaming on destination to avoid collisions)
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/portainer/docker-compose.yml" "$USER@$HOST:/tmp/portainer.docker-compose.yml"
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/ollama/docker-compose.yml" "$USER@$HOST:/tmp/ollama.docker-compose.yml"
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/rust/docker-compose.yml" "$USER@$HOST:/tmp/rust.docker-compose.yml"
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/ark/docker-compose.yml" "$USER@$HOST:/tmp/ark.docker-compose.yml"
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/cs2/docker-compose.yml" "$USER@$HOST:/tmp/cs2.docker-compose.yml"
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/minecraft/docker-compose.yml" "$USER@$HOST:/tmp/minecraft.docker-compose.yml"
+      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/plex/docker-compose.yml" "$USER@$HOST:/tmp/plex.docker-compose.yml"
 
-  provisioner "remote-exec" {
-    inline = [
-      # Move files into place
-      "sudo mv /tmp/portainer.docker-compose.yml /opt/portainer/docker-compose.yml",
-      "sudo mv /tmp/ollama.docker-compose.yml /opt/ollama/docker-compose.yml",
-      "sudo mv /tmp/rust.docker-compose.yml /opt/rust-server/docker-compose.yml",
-      "sudo mv /tmp/ark.docker-compose.yml /opt/ark/docker-compose.yml",
-      "sudo mv /tmp/minecraft.docker-compose.yml /opt/minecraft/docker-compose.yml",
-      "sudo mv /tmp/plex.docker-compose.yml /opt/plex/docker-compose.yml",
+      # Execute Remote Setup via SSH
+      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$USER@$HOST" 'bash -s' <<REMOTE_SCRIPT
+        set -e
+        
+        # Ensure directories exist (in case bootstrap didn't run or new ones matched)
+        sudo mkdir -p /opt/portainer /opt/ollama /opt/rust-server /opt/ark /opt/cs2 /opt/minecraft /opt/plex
+        sudo mkdir -p /opt/cs2/data /opt/plex/media
+        sudo chown -R 1000:1000 /opt/cs2/data || true
 
-      # Render CS2 Template
-      "sudo mkdir -p /opt/cs2",
-      "sudo sed -e 's/__CS2_GSLT__/${var.cs2_gslt}/g' /tmp/cs2.docker-compose.yml | sudo tee /opt/cs2/docker-compose.yml >/dev/null",
-      "sudo rm -f /tmp/cs2.docker-compose.yml",
+        # Move files to correct locations
+        sudo mv /tmp/portainer.docker-compose.yml /opt/portainer/docker-compose.yml
+        sudo mv /tmp/ollama.docker-compose.yml /opt/ollama/docker-compose.yml
+        sudo mv /tmp/rust.docker-compose.yml /opt/rust-server/docker-compose.yml
+        sudo mv /tmp/ark.docker-compose.yml /opt/ark/docker-compose.yml
+        sudo mv /tmp/minecraft.docker-compose.yml /opt/minecraft/docker-compose.yml
+        sudo mv /tmp/plex.docker-compose.yml /opt/plex/docker-compose.yml
 
-      # Stack: Portainer
-      "${var.enable_portainer ? "cd /opt/portainer && sudo docker compose up -d" : "echo 'Skipping Portainer'"}",
+        # Handle CS2 Template Replacement
+        sudo mkdir -p /opt/cs2
+        sudo sed -e "s/__CS2_GSLT__/${var.cs2_gslt}/g" /tmp/cs2.docker-compose.yml | sudo tee /opt/cs2/docker-compose.yml >/dev/null
+        sudo rm -f /tmp/cs2.docker-compose.yml
 
-      # Stack: Ollama
-      "${var.enable_ollama ? "cd /opt/ollama && sudo docker compose up -d && sleep 10 && sudo docker exec ollama ollama pull tinyllama && sudo docker exec ollama ollama pull starcoder:1b" : "echo 'Skipping Ollama'"}",
-
-      # Stack: Rust
-      "${var.enable_rust ? "cd /opt/rust-server && sudo docker compose up -d" : "echo 'Skipping Rust'"}",
-
-      # Stack: ARK
-      "${var.enable_ark ? "cd /opt/ark && sudo docker compose up -d" : "echo 'Skipping ARK'"}",
-
-      # Stack: CS2
-      "${var.enable_cs2 ? "cd /opt/cs2 && sudo docker compose up -d" : "echo 'Skipping CS2'"}",
-
-      # Stack: Minecraft
-      "${var.enable_minecraft ? "cd /opt/minecraft && sudo docker compose up -d" : "echo 'Skipping Minecraft'"}",
-
-      # Stack: Plex
-      "${var.enable_plex ? "cd /opt/plex && sudo docker compose up -d" : "echo 'Skipping Plex'"}",
-    ]
+        # Deploy Stacks
+        ${var.enable_portainer ? "cd /opt/portainer && (sudo docker rm -f portainer || true) && sudo docker compose up -d" : "echo 'Skipping Portainer'"}
+        ${var.enable_ollama ? "cd /opt/ollama && (sudo docker rm -f ollama || true) && sudo docker compose up -d && sleep 10 && sudo docker exec ollama ollama pull tinyllama && sudo docker exec ollama ollama pull starcoder:1b" : "echo 'Skipping Ollama'"}
+        ${var.enable_rust ? "cd /opt/rust-server && (sudo docker rm -f rust-server || true) && sudo docker compose up -d" : "echo 'Skipping Rust'"}
+        ${var.enable_ark ? "cd /opt/ark && (sudo docker rm -f ark-server ark_server || true) && sudo docker compose up -d" : "echo 'Skipping ARK'"}
+        ${var.enable_cs2 ? "cd /opt/cs2 && (sudo docker rm -f cs2-server cs2_server || true) && sudo docker compose up -d" : "echo 'Skipping CS2'"}
+        ${var.enable_minecraft ? "cd /opt/minecraft && (sudo docker rm -f minecraft-server || true) && sudo docker compose up -d" : "echo 'Skipping Minecraft'"}
+        ${var.enable_plex ? "cd /opt/plex && (sudo docker rm -f plex || true) && sudo docker compose up -d" : "echo 'Skipping Plex'"}
+REMOTE_SCRIPT
+    EOT
   }
 }
