@@ -96,7 +96,7 @@ resource "null_resource" "deploy_stacks" {
       "${var.enable_portainer ? "cd /opt/portainer && sudo docker compose up -d" : "echo 'Skipping Portainer'"}",
 
       # Stack: Ollama
-      "${var.enable_ollama ? "cd /opt/ollama && sudo docker compose up -d" : "echo 'Skipping Ollama'"}",
+      "${var.enable_ollama ? "cd /opt/ollama && sudo docker compose up -d && sleep 10 && sudo docker exec ollama ollama pull tinyllama && sudo docker exec ollama ollama pull starcoder:1b" : "echo 'Skipping Ollama'"}",
 
       # Stack: Rust
       "${var.enable_rust ? "cd /opt/rust-server && sudo docker compose up -d" : "echo 'Skipping Rust'"}",
