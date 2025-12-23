@@ -40,8 +40,9 @@ resource "null_resource" "bootstrap_docker" {
       # "sudo usermod -aG docker $USER || true",
 
       # Create stack dirs
-      "sudo mkdir -p /opt/portainer /opt/ollama /opt/rust-server /opt/ark /opt/cs2 /opt/minecraft",
+      "sudo mkdir -p /opt/portainer /opt/ollama /opt/rust-server /opt/ark /opt/cs2 /opt/minecraft /opt/plex",
       "sudo mkdir -p /opt/cs2/data",
+      "sudo mkdir -p /opt/plex/media",
       "sudo chown -R 1000:1000 /opt/cs2/data || true",
     ]
   }
@@ -82,6 +83,10 @@ resource "null_resource" "deploy_stacks" {
     source      = "${path.module}/stacks/minecraft/docker-compose.yml"
     destination = "/tmp/minecraft.docker-compose.yml"
   }
+  provisioner "file" {
+    source      = "${path.module}/stacks/plex/docker-compose.yml"
+    destination = "/tmp/plex.docker-compose.yml"
+  }
 
   provisioner "remote-exec" {
     inline = [
@@ -91,7 +96,8 @@ resource "null_resource" "deploy_stacks" {
       "sudo mv /tmp/rust.docker-compose.yml /opt/rust-server/docker-compose.yml",
       "sudo mv /tmp/ark.docker-compose.yml /opt/ark/docker-compose.yml",
       "sudo mv /tmp/minecraft.docker-compose.yml /opt/minecraft/docker-compose.yml",
-
+      "sudo mv /tmp/plex.docker-compose.yml /opt/plex/docker-compose.yml",
+      
       # Render CS2 Template
       "sudo mkdir -p /opt/cs2",
       "sudo sed -e 's/__CS2_GSLT__/${var.cs2_gslt}/g' /tmp/cs2.docker-compose.yml | sudo tee /opt/cs2/docker-compose.yml >/dev/null",
@@ -114,6 +120,9 @@ resource "null_resource" "deploy_stacks" {
 
       # Stack: Minecraft
       "${var.enable_minecraft ? "cd /opt/minecraft && sudo docker compose up -d" : "echo 'Skipping Minecraft'"}",
+
+      # Stack: Plex
+      "${var.enable_plex ? "cd /opt/plex && sudo docker compose up -d" : "echo 'Skipping Plex'"}",
     ]
   }
 }

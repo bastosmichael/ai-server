@@ -28,6 +28,11 @@ output "minecraft_server_port" {
   value       = var.enable_minecraft ? "25565" : "Minecraft server not enabled"
 }
 
+output "plex_url" {
+  description = "URL to access Plex"
+  value       = var.enable_plex ? "http://localhost:32400/web" : "Plex not enabled"
+}
+
 output "deployed_stacks" {
   description = "List of deployed stacks"
   value = concat(
@@ -36,6 +41,7 @@ output "deployed_stacks" {
     var.enable_rust ? ["rust"] : [],
     var.enable_ark ? ["ark"] : [],
     var.enable_cs2 ? ["cs2"] : [],
-    var.enable_minecraft ? ["minecraft"] : []
+    var.enable_minecraft ? ["minecraft"] : [],
+    var.enable_plex ? ["plex"] : []
   )
 }

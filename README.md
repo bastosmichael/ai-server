@@ -16,6 +16,7 @@ infra/            # Terraform configuration
     ark/
     cs2/
     minecraft/
+    plex/
 ```
 
 ## Deployment
@@ -34,7 +35,8 @@ infra/            # Terraform configuration
      -var="enable_cs2=true" \
      -var="enable_ark=true" \
      -var="enable_rust=true" \
-     -var="enable_minecraft=true"
+     -var="enable_minecraft=true" \
+     -var="enable_plex=true"
    ```
 
    **Note:** replace `192.168.86.38` with your actual server IP.
@@ -46,6 +48,7 @@ infra/            # Terraform configuration
    * **ARK:** Connect via Steam to `<server-ip>:7777` (UDP)
    * **Rust:** Connect via Steam to `<server-ip>:28015`
    * **Minecraft:** Connect via Minecraft to `<server-ip>:25565`
+   * **Plex:** `http://<server-ip>:32400/web`
 
 ## System Prerequisites
 Before running Terraform, you must ensure:

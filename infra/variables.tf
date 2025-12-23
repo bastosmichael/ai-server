@@ -40,6 +40,12 @@ variable "enable_minecraft" {
   default     = false
 }
 
+variable "enable_plex" {
+  description = "Enable Plex stack deployment"
+  type        = bool
+  default     = false
+}
+
 # Server Configuration Variables
 variable "ark_server_password" {
   description = "ARK server password (leave empty for no password)"
