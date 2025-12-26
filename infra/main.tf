@@ -122,7 +122,7 @@ resource "null_resource" "deploy_stacks" {
         sudo ufw allow 27017/tcp # MongoDB
         sudo ufw allow 8188/tcp  # ComfyUI
         sudo ufw allow 7861/tcp  # Stable Diffusion WebUI
-        sudo ufw allow 9000/tcp  # Whisper server
+        sudo ufw allow 10300/tcp # Whisper server (Wyoming)
         sudo ufw allow 10200/tcp # Piper TTS
         sudo ufw allow 6333/tcp  # Qdrant HTTP
         sudo ufw allow 6334/tcp  # Qdrant gRPC

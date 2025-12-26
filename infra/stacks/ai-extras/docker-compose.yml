@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   text-generation-webui:
-    image: ghcr.io/oobabooga/text-generation-webui:latest
+    image: atinoda/text-generation-webui:default-cpu
     container_name: text-generation-webui
     restart: unless-stopped
     ports:
@@ -10,10 +10,11 @@ services:
     environment:
       - CLI_ARGS=--listen
     volumes:
-      - textgen-ui:/data
+      - textgen-ui:/app/text-generation-webui/characters
+      - textgen-ui-models:/app/text-generation-webui/models
 
   librechat:
-    image: ghcr.io/danny-avila/librechat:latest
+    image: ghcr.io/danny-avila/librechat-dev:latest
     container_name: librechat
     restart: unless-stopped
     depends_on:
@@ -31,7 +32,8 @@ services:
     ports:
       - "3080:3080"
     volumes:
-      - librechat-uploads:/app/backend/uploads
+      - librechat-uploads:/app/uploads
+      - librechat-logs:/app/logs
 
   librechat-mongo:
     image: mongo:7
@@ -44,7 +46,7 @@ services:
     image: redis:7
     container_name: librechat-redis
     restart: unless-stopped
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    command: [ "redis-server", "--save", "", "--appendonly", "no" ]
     volumes:
       - librechat-redis:/data
 
@@ -58,42 +60,39 @@ services:
       - librechat-meili:/meili_data
 
   comfyui:
-    image: ghcr.io/comfyanonymous/comfyui:latest
+    image: yanwk/comfyui-boot:cpu
     container_name: comfyui
     restart: unless-stopped
     ports:
       - "8188:8188"
     volumes:
-      - comfyui-data:/home/comfyui
+      - comfyui-data:/comfyui
 
   stable-diffusion-webui:
-    image: lscr.io/linuxserver/stable-diffusion:latest
+    image: siutin/stable-diffusion-webui-docker:latest-cpu
     container_name: stable-diffusion-webui
     restart: unless-stopped
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - CLI_ARGS=--listen
     ports:
       - "7861:7860"
     volumes:
-      - sd-webui:/config
+      - sd-webui:/app/stable-diffusion-webui
+    command: "--listen --skip-torch-cuda-test --no-half --use-cpu all"
 
   whisper-server:
-    image: ghcr.io/ggerganov/whisper.cpp:server
+    image: rhasspy/wyoming-whisper:latest
     container_name: whisper-server
     restart: unless-stopped
-    command: ["--host", "0.0.0.0", "--port", "9000", "--model", "ggml-base.en.bin"]
+    command: [ "--model", "tiny-int8", "--language", "en" ]
     ports:
-      - "9000:9000"
+      - "10300:10300"
     volumes:
-      - whisper-models:/models
+      - whisper-models:/data
 
   piper-tts:
     image: rhasspy/wyoming-piper:latest
     container_name: piper-tts
     restart: unless-stopped
-    command: ["--voice", "en-us-lessac-medium", "--uri", "0.0.0.0:10200"]
+    command: [ "--voice", "en-us-lessac-medium", "--uri", "0.0.0.0:10200" ]
     ports:
       - "10200:10200"
     volumes:
@@ -113,40 +112,41 @@ services:
     image: milvusdb/milvus:latest
     container_name: milvus
     restart: unless-stopped
-    command: ["milvus", "run", "standalone"]
+    command: [ "milvus", "run", "standalone" ]
     ports:
       - "19530:19530"
       - "9091:9091"
     volumes:
       - milvus-data:/var/lib/milvus
+  # langgraph-studio:
+  #   image: ghcr.io/langchain-ai/langgraph-studio:latest
+  #   container_name: langgraph-studio
+  #   restart: unless-stopped
+  #   environment:
+  #     - PORT=8123
+  #     - LANGGRAPH_ENABLE_OLLAMA=true
+  #     - LANGGRAPH_OLLAMA_URL=http://ollama:11434
+  #   ports:
+  #     - "8123:8123"
+  #   volumes:
+  #     - langgraph-projects:/workspace
 
-  langgraph-studio:
-    image: ghcr.io/langchain-ai/langgraph-studio:latest
-    container_name: langgraph-studio
-    restart: unless-stopped
-    environment:
-      - PORT=8123
-      - LANGGRAPH_ENABLE_OLLAMA=true
-      - LANGGRAPH_OLLAMA_URL=http://ollama:11434
-    ports:
-      - "8123:8123"
-    volumes:
-      - langgraph-projects:/workspace
-
-  crewai-orchestrator:
-    image: ghcr.io/joaomdmoura/crewai-server:latest
-    container_name: crewai-orchestrator
-    restart: unless-stopped
-    environment:
-      - PORT=8001
-    ports:
-      - "8001:8001"
-    volumes:
-      - crewai-data:/app/data
+  # crewai-orchestrator:
+  #   image: ghcr.io/joaomdmoura/crewai-server:latest
+  #   container_name: crewai-orchestrator
+  #   restart: unless-stopped
+  #   environment:
+  #     - PORT=8001
+  #   ports:
+  #     - "8001:8001"
+  #   volumes:
+  #     - crewai-data:/app/data
 
 volumes:
   textgen-ui:
+  textgen-ui-models:
   librechat-uploads:
+  librechat-logs:
   librechat-mongo:
   librechat-redis:
   librechat-meili:
