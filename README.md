@@ -123,3 +123,10 @@ Before running Terraform, you must ensure:
 Terraform uses SSH to connect to the server. Ensure you have:
 1. SSH access to the server via public key (`ssh-copy-id`).
 2. Sudo privileges on the server (NOPASSWD recommended).
+
+## Checking Logs
+To check on the logs of the deployed services (example: Portainer), you can SSH into the server and run the docker logs command:
+
+```bash
+ssh michael@192.168.86.38 "sudo docker logs -f portainer"
+```
