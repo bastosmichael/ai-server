@@ -59,9 +59,8 @@ resource "null_resource" "bootstrap_docker" {
       # "sudo usermod -aG docker $USER || true",
 
       # Create stack dirs
-      "sudo mkdir -p /opt/portainer /opt/ollama /opt/plex /opt/jellyfin /opt/immich /opt/navidrome /opt/audiobookshelf /opt/nextcloud /opt/ai-extras",
-      "sudo mkdir -p /opt/plex/media /opt/jellyfin/cache /opt/jellyfin/media /opt/immich/library /opt/navidrome/music /opt/audiobookshelf/audiobooks /opt/audiobookshelf/podcasts /opt/nextcloud/html",
-      "sudo chown -R 1000:1000 /opt/plex /opt/portainer /opt/ollama /opt/jellyfin /opt/immich /opt/navidrome /opt/audiobookshelf /opt/nextcloud /opt/ai-extras || true",
+      "sudo mkdir -p /opt/portainer /opt/ollama /opt/ai-extras",
+      "sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/ai-extras || true",
     ]
   }
 }
@@ -79,12 +78,6 @@ resource "null_resource" "deploy_stacks" {
       # Copy Compose Files via SCP (renaming on destination to avoid collisions)
       scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/portainer/docker-compose.yml" "$USER@$HOST:/tmp/portainer.docker-compose.yml"
       scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/ollama/docker-compose.yml" "$USER@$HOST:/tmp/ollama.docker-compose.yml"
-      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/plex/docker-compose.yml" "$USER@$HOST:/tmp/plex.docker-compose.yml"
-      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/jellyfin/docker-compose.yml" "$USER@$HOST:/tmp/jellyfin.docker-compose.yml"
-      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/immich/docker-compose.yml" "$USER@$HOST:/tmp/immich.docker-compose.yml"
-      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/navidrome/docker-compose.yml" "$USER@$HOST:/tmp/navidrome.docker-compose.yml"
-      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/audiobookshelf/docker-compose.yml" "$USER@$HOST:/tmp/audiobookshelf.docker-compose.yml"
-      scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/nextcloud/docker-compose.yml" "$USER@$HOST:/tmp/nextcloud.docker-compose.yml"
       ${local.enable_any_ai_extras ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/ai-extras/docker-compose.yml\" \"$USER@$HOST:/tmp/ai-extras.docker-compose.yml\"" : ""}
 
       # Execute Remote Setup via SSH
@@ -116,9 +109,8 @@ resource "null_resource" "deploy_stacks" {
         sudo systemctl restart systemd-resolved || true
 
         # Ensure directories exist (in case bootstrap didn't run or new ones matched)
-        sudo mkdir -p /opt/portainer /opt/ollama /opt/plex /opt/jellyfin /opt/immich /opt/navidrome /opt/audiobookshelf /opt/nextcloud /opt/ai-extras
-        sudo mkdir -p /opt/plex/media /opt/jellyfin/cache /opt/jellyfin/media /opt/immich/library /opt/navidrome/music /opt/audiobookshelf/audiobooks /opt/audiobookshelf/podcasts /opt/nextcloud/html
-        sudo chown -R 1000:1000 /opt/plex /opt/portainer /opt/ollama /opt/jellyfin /opt/immich /opt/navidrome /opt/audiobookshelf /opt/nextcloud /opt/ai-extras || true
+        sudo mkdir -p /opt/portainer /opt/ollama /opt/ai-extras
+        sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/ai-extras || true
 
         # Configure Firewall (UFW)
         echo "Configuring Firewall..."
@@ -129,13 +121,6 @@ resource "null_resource" "deploy_stacks" {
         sudo ufw allow 9000/tcp # Portainer
         sudo ufw allow 3000/tcp # Open WebUI / dashboards
         sudo ufw allow 11434/tcp # Ollama
-        sudo ufw allow 32400/tcp # Plex
-        sudo ufw allow 8096/tcp  # Jellyfin
-        sudo ufw allow 8920/tcp  # Jellyfin HTTPS
-        sudo ufw allow 2283/tcp  # Immich
-        sudo ufw allow 4533/tcp  # Navidrome
-        sudo ufw allow 13378/tcp # Audiobookshelf
-        sudo ufw allow 8080/tcp  # Nextcloud
         if [ "$AI_EXTRAS_ENABLED" = "true" ]; then
           sudo ufw allow 5678/tcp  # n8n
           sudo ufw allow 7860/tcp  # text-generation-webui
@@ -193,69 +178,13 @@ EOF
           sudo mv /tmp/ollama.docker-compose.yml /opt/ollama/docker-compose.yml
         fi
 
-        sudo mv /tmp/plex.docker-compose.yml /opt/plex/docker-compose.yml
-        sudo mv /tmp/jellyfin.docker-compose.yml /opt/jellyfin/docker-compose.yml
-        sudo mv /tmp/immich.docker-compose.yml /opt/immich/docker-compose.yml
-        sudo mv /tmp/navidrome.docker-compose.yml /opt/navidrome/docker-compose.yml
-        sudo mv /tmp/audiobookshelf.docker-compose.yml /opt/audiobookshelf/docker-compose.yml
-        sudo mv /tmp/nextcloud.docker-compose.yml /opt/nextcloud/docker-compose.yml
         if [ "$AI_EXTRAS_ENABLED" = "true" ]; then
           sudo mv /tmp/ai-extras.docker-compose.yml /opt/ai-extras/docker-compose.yml
-        fi
-
-        # Configure Plex Media Storage
-        if [ -d "/mnt/coldstore" ]; then
-            echo "Coldstore detected. Pointing Plex media to /mnt/coldstore..."
-            sudo sed -i 's|/opt/plex/media:/media|/mnt/coldstore:/media|' /opt/plex/docker-compose.yml
-        else
-            echo "No coldstore detected. Keeping default /opt/plex/media."
-        fi
-
-        if [ -d "/mnt/coldstore" ]; then
-            echo "Coldstore detected. Pointing Jellyfin media to /mnt/coldstore/jellyfin..."
-            sudo sed -i 's|/opt/jellyfin/media:/media|/mnt/coldstore/jellyfin:/media|' /opt/jellyfin/docker-compose.yml
-        else
-            echo "No coldstore detected. Keeping default /opt/jellyfin/media."
-        fi
-
-        if [ -d "/mnt/coldstore" ]; then
-            echo "Coldstore detected. Pointing Immich library to /mnt/coldstore/immich-library..."
-            sudo sed -i 's|/opt/immich/library:/usr/src/app/upload|/mnt/coldstore/immich-library:/usr/src/app/upload|' /opt/immich/docker-compose.yml
-        else
-            echo "No coldstore detected. Keeping default /opt/immich/library."
-        fi
-
-        if [ -d "/mnt/coldstore" ]; then
-            echo "Coldstore detected. Pointing Navidrome music to /mnt/coldstore/music..."
-            sudo sed -i 's|/opt/navidrome/music:/music|/mnt/coldstore/music:/music|' /opt/navidrome/docker-compose.yml
-        else
-            echo "No coldstore detected. Keeping default /opt/navidrome/music."
-        fi
-
-        if [ -d "/mnt/coldstore" ]; then
-            echo "Coldstore detected. Pointing Audiobookshelf media to /mnt/coldstore..."
-            sudo sed -i 's|/opt/audiobookshelf/audiobooks:/audiobooks|/mnt/coldstore/audiobooks:/audiobooks|' /opt/audiobookshelf/docker-compose.yml
-            sudo sed -i 's|/opt/audiobookshelf/podcasts:/podcasts|/mnt/coldstore/podcasts:/podcasts|' /opt/audiobookshelf/docker-compose.yml
-        else
-            echo "No coldstore detected. Keeping default /opt/audiobookshelf media paths."
-        fi
-
-        if [ -d "/mnt/coldstore" ]; then
-            echo "Coldstore detected. Pointing Nextcloud data to /mnt/coldstore/nextcloud..."
-            sudo sed -i 's|/opt/nextcloud/html:/var/www/html|/mnt/coldstore/nextcloud:/var/www/html|' /opt/nextcloud/docker-compose.yml
-        else
-            echo "No coldstore detected. Keeping default /opt/nextcloud/html."
         fi
 
         # Deploy Stacks
         ${var.enable_portainer ? "cd /opt/portainer && (sudo docker rm -f portainer || true) && retry sudo docker compose up -d" : "echo 'Skipping Portainer'"}
         ${var.enable_ollama ? "cd /opt/ollama && (sudo docker rm -f ollama || true) && retry sudo docker compose up -d && sleep 10 && retry sudo docker exec ollama ollama pull tinyllama && retry sudo docker exec ollama ollama pull starcoder:1b && retry sudo docker exec ollama ollama pull gpt-oss" : "echo 'Skipping Ollama'"}
-        ${var.enable_plex ? "cd /opt/plex && (sudo docker rm -f plex || true) && retry sudo docker compose up -d" : "echo 'Skipping Plex'"}
-        ${var.enable_jellyfin ? "cd /opt/jellyfin && (sudo docker rm -f jellyfin || true) && retry sudo docker compose up -d" : "echo 'Skipping Jellyfin'"}
-        ${var.enable_immich ? "cd /opt/immich && retry sudo docker compose up -d" : "echo 'Skipping Immich'"}
-        ${var.enable_navidrome ? "cd /opt/navidrome && (sudo docker rm -f navidrome || true) && retry sudo docker compose up -d" : "echo 'Skipping Navidrome'"}
-        ${var.enable_audiobookshelf ? "cd /opt/audiobookshelf && (sudo docker rm -f audiobookshelf || true) && retry sudo docker compose up -d" : "echo 'Skipping Audiobookshelf'"}
-        ${var.enable_nextcloud ? "cd /opt/nextcloud && (sudo docker rm -f nextcloud nextcloud-db nextcloud-redis || true) && retry sudo docker compose up -d" : "echo 'Skipping Nextcloud'"}
         ${local.ai_extras_flags.n8n ? "cd /opt/ai-extras && retry sudo docker compose --profile n8n up -d n8n" : "echo 'Skipping n8n'"}
         ${local.ai_extras_flags.text_generation_webui ? "cd /opt/ai-extras && retry sudo docker compose --profile text-generation-webui up -d text-generation-webui" : "echo 'Skipping Text Generation WebUI'"}
         ${local.ai_extras_flags.librechat ? "cd /opt/ai-extras && retry sudo docker compose --profile librechat up -d librechat" : "echo 'Skipping LibreChat'"}
