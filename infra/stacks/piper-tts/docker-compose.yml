@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  piper-tts:
+    image: rhasspy/wyoming-piper:latest
+    container_name: piper-tts
+    restart: unless-stopped
+    command: [ "--voice", "en-us-lessac-medium", "--uri", "0.0.0.0:10200" ]
+    ports:
+      - "10200:10200"
+    volumes:
+      - piper-voices:/data
+
+volumes:
+  piper-voices:

@@ -16,12 +16,6 @@ variable "enable_ollama" {
   default     = false
 }
 
-variable "enable_ai_extras" {
-  description = "Enable optional AI extras stack deployment"
-  type        = bool
-  default     = false
-}
-
 variable "enable_text_generation_webui" {
   description = "Enable Text Generation WebUI deployment"
   type        = bool

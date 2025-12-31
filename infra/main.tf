@@ -11,25 +11,6 @@ terraform {
 
 provider "null" {}
 
-locals {
-  ai_extras_flags = {
-    text_generation_webui  = var.enable_ai_extras || var.enable_text_generation_webui
-    librechat              = var.enable_ai_extras || var.enable_librechat
-    comfyui                = var.enable_ai_extras || var.enable_comfyui
-    stable_diffusion_webui = var.enable_ai_extras || var.enable_stable_diffusion_webui
-    whisper_server         = var.enable_ai_extras || var.enable_whisper_server
-    piper_tts              = var.enable_ai_extras || var.enable_piper_tts
-    qdrant                 = var.enable_ai_extras || var.enable_qdrant
-    milvus                 = var.enable_ai_extras || var.enable_milvus
-    langgraph_studio       = var.enable_ai_extras || var.enable_langgraph_studio
-    crewai                 = var.enable_ai_extras || var.enable_crewai
-    n8n                    = var.enable_ai_extras || var.enable_n8n
-    whisperx               = var.enable_ai_extras || var.enable_whisperx
-  }
-
-  enable_any_ai_extras = contains(values(local.ai_extras_flags), true)
-}
-
 resource "null_resource" "bootstrap_docker" {
   connection {
     type = "ssh"
@@ -59,8 +40,8 @@ resource "null_resource" "bootstrap_docker" {
       # "sudo usermod -aG docker $USER || true",
 
       # Create stack dirs
-      "sudo mkdir -p /opt/portainer /opt/ollama /opt/ai-extras",
-      "sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/ai-extras || true",
+      "sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai",
+      "sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai || true",
     ]
   }
 }
@@ -78,14 +59,23 @@ resource "null_resource" "deploy_stacks" {
       # Copy Compose Files via SCP (renaming on destination to avoid collisions)
       scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/portainer/docker-compose.yml" "$USER@$HOST:/tmp/portainer.docker-compose.yml"
       scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${path.module}/stacks/ollama/docker-compose.yml" "$USER@$HOST:/tmp/ollama.docker-compose.yml"
-      ${local.enable_any_ai_extras ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/ai-extras/docker-compose.yml\" \"$USER@$HOST:/tmp/ai-extras.docker-compose.yml\"" : ""}
+      ${var.enable_n8n ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/n8n/docker-compose.yml\" \"$USER@$HOST:/tmp/n8n.docker-compose.yml\"" : ""}
+      ${var.enable_text_generation_webui ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/text-generation-webui/docker-compose.yml\" \"$USER@$HOST:/tmp/text-generation-webui.docker-compose.yml\"" : ""}
+      ${var.enable_librechat ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/librechat/docker-compose.yml\" \"$USER@$HOST:/tmp/librechat.docker-compose.yml\"" : ""}
+      ${var.enable_comfyui ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/comfyui/docker-compose.yml\" \"$USER@$HOST:/tmp/comfyui.docker-compose.yml\"" : ""}
+      ${var.enable_stable_diffusion_webui ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/stable-diffusion-webui/docker-compose.yml\" \"$USER@$HOST:/tmp/stable-diffusion-webui.docker-compose.yml\"" : ""}
+      ${var.enable_whisper_server ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/whisper-server/docker-compose.yml\" \"$USER@$HOST:/tmp/whisper-server.docker-compose.yml\"" : ""}
+      ${var.enable_whisperx ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/whisperx/docker-compose.yml\" \"$USER@$HOST:/tmp/whisperx.docker-compose.yml\"" : ""}
+      ${var.enable_piper_tts ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/piper-tts/docker-compose.yml\" \"$USER@$HOST:/tmp/piper-tts.docker-compose.yml\"" : ""}
+      ${var.enable_qdrant ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/qdrant/docker-compose.yml\" \"$USER@$HOST:/tmp/qdrant.docker-compose.yml\"" : ""}
+      ${var.enable_milvus ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/milvus/docker-compose.yml\" \"$USER@$HOST:/tmp/milvus.docker-compose.yml\"" : ""}
+      ${var.enable_langgraph_studio ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/langgraph-studio/docker-compose.yml\" \"$USER@$HOST:/tmp/langgraph-studio.docker-compose.yml\"" : ""}
+      ${var.enable_crewai ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/crewai/docker-compose.yml\" \"$USER@$HOST:/tmp/crewai.docker-compose.yml\"" : ""}
 
       # Execute Remote Setup via SSH
       ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$USER@$HOST" 'bash -s' <<'REMOTE_SCRIPT'
         set -e
 
-        AI_EXTRAS_ENABLED="${local.enable_any_ai_extras ? "true" : "false"}"
-        
         # Helper for retrying commands (fixes transient DNS/network issues)
         function retry {
           local retries=5
@@ -109,8 +99,8 @@ resource "null_resource" "deploy_stacks" {
         sudo systemctl restart systemd-resolved || true
 
         # Ensure directories exist (in case bootstrap didn't run or new ones matched)
-        sudo mkdir -p /opt/portainer /opt/ollama /opt/ai-extras
-        sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/ai-extras || true
+        sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai
+        sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai || true
 
         # Configure Firewall (UFW)
         echo "Configuring Firewall..."
@@ -121,25 +111,18 @@ resource "null_resource" "deploy_stacks" {
         sudo ufw allow 9000/tcp # Portainer
         sudo ufw allow 3000/tcp # Open WebUI / dashboards
         sudo ufw allow 11434/tcp # Ollama
-        if [ "$AI_EXTRAS_ENABLED" = "true" ]; then
-          sudo ufw allow 5678/tcp  # n8n
-          sudo ufw allow 7860/tcp  # text-generation-webui
-          sudo ufw allow 3080/tcp  # LibreChat
-          sudo ufw allow 7700/tcp  # Meilisearch
-          sudo ufw allow 6379/tcp  # Redis
-          sudo ufw allow 27017/tcp # MongoDB
-          sudo ufw allow 8188/tcp  # ComfyUI
-          sudo ufw allow 7861/tcp  # Stable Diffusion WebUI
-          sudo ufw allow 10300/tcp # Whisper server (Wyoming)
-          sudo ufw allow 10200/tcp # Piper TTS
-          sudo ufw allow 6333/tcp  # Qdrant HTTP
-          sudo ufw allow 6334/tcp  # Qdrant gRPC
-          sudo ufw allow 19530/tcp # Milvus gRPC
-          sudo ufw allow 9091/tcp  # Milvus HTTP
-          sudo ufw allow 8123/tcp  # LangGraph Studio
-          sudo ufw allow 8001/tcp  # CrewAI orchestrator
-          sudo ufw allow 9001/tcp  # WhisperX API
-        fi
+        ${var.enable_n8n ? "sudo ufw allow 5678/tcp" : ""}
+        ${var.enable_text_generation_webui ? "sudo ufw allow 7860/tcp" : ""}
+        ${var.enable_librechat ? "sudo ufw allow 3080/tcp\n        sudo ufw allow 7700/tcp\n        sudo ufw allow 6379/tcp\n        sudo ufw allow 27017/tcp" : ""}
+        ${var.enable_comfyui ? "sudo ufw allow 8188/tcp" : ""}
+        ${var.enable_stable_diffusion_webui ? "sudo ufw allow 7861/tcp" : ""}
+        ${var.enable_whisper_server ? "sudo ufw allow 10300/tcp" : ""}
+        ${var.enable_piper_tts ? "sudo ufw allow 10200/tcp" : ""}
+        ${var.enable_qdrant ? "sudo ufw allow 6333/tcp\n        sudo ufw allow 6334/tcp" : ""}
+        ${var.enable_milvus ? "sudo ufw allow 19530/tcp\n        sudo ufw allow 9091/tcp" : ""}
+        ${var.enable_langgraph_studio ? "sudo ufw allow 8123/tcp" : ""}
+        ${var.enable_crewai ? "sudo ufw allow 8001/tcp" : ""}
+        ${var.enable_whisperx ? "sudo ufw allow 9001/tcp" : ""}
         sudo ufw --force enable || true
 
         # Move files to correct locations
@@ -178,25 +161,34 @@ EOF
           sudo mv /tmp/ollama.docker-compose.yml /opt/ollama/docker-compose.yml
         fi
 
-        if [ "$AI_EXTRAS_ENABLED" = "true" ]; then
-          sudo mv /tmp/ai-extras.docker-compose.yml /opt/ai-extras/docker-compose.yml
-        fi
+        ${var.enable_n8n ? "sudo mv /tmp/n8n.docker-compose.yml /opt/n8n/docker-compose.yml" : ""}
+        ${var.enable_text_generation_webui ? "sudo mv /tmp/text-generation-webui.docker-compose.yml /opt/text-generation-webui/docker-compose.yml" : ""}
+        ${var.enable_librechat ? "sudo mv /tmp/librechat.docker-compose.yml /opt/librechat/docker-compose.yml" : ""}
+        ${var.enable_comfyui ? "sudo mv /tmp/comfyui.docker-compose.yml /opt/comfyui/docker-compose.yml" : ""}
+        ${var.enable_stable_diffusion_webui ? "sudo mv /tmp/stable-diffusion-webui.docker-compose.yml /opt/stable-diffusion-webui/docker-compose.yml" : ""}
+        ${var.enable_whisper_server ? "sudo mv /tmp/whisper-server.docker-compose.yml /opt/whisper-server/docker-compose.yml" : ""}
+        ${var.enable_whisperx ? "sudo mv /tmp/whisperx.docker-compose.yml /opt/whisperx/docker-compose.yml" : ""}
+        ${var.enable_piper_tts ? "sudo mv /tmp/piper-tts.docker-compose.yml /opt/piper-tts/docker-compose.yml" : ""}
+        ${var.enable_qdrant ? "sudo mv /tmp/qdrant.docker-compose.yml /opt/qdrant/docker-compose.yml" : ""}
+        ${var.enable_milvus ? "sudo mv /tmp/milvus.docker-compose.yml /opt/milvus/docker-compose.yml" : ""}
+        ${var.enable_langgraph_studio ? "sudo mv /tmp/langgraph-studio.docker-compose.yml /opt/langgraph-studio/docker-compose.yml" : ""}
+        ${var.enable_crewai ? "sudo mv /tmp/crewai.docker-compose.yml /opt/crewai/docker-compose.yml" : ""}
 
         # Deploy Stacks
         ${var.enable_portainer ? "cd /opt/portainer && (sudo docker rm -f portainer || true) && retry sudo docker compose up -d" : "echo 'Skipping Portainer'"}
         ${var.enable_ollama ? "cd /opt/ollama && (sudo docker rm -f ollama || true) && retry sudo docker compose up -d && sleep 10 && retry sudo docker exec ollama ollama pull tinyllama && retry sudo docker exec ollama ollama pull starcoder:1b && retry sudo docker exec ollama ollama pull gpt-oss" : "echo 'Skipping Ollama'"}
-        ${local.ai_extras_flags.n8n ? "cd /opt/ai-extras && retry sudo docker compose --profile n8n up -d n8n" : "echo 'Skipping n8n'"}
-        ${local.ai_extras_flags.text_generation_webui ? "cd /opt/ai-extras && retry sudo docker compose --profile text-generation-webui up -d text-generation-webui" : "echo 'Skipping Text Generation WebUI'"}
-        ${local.ai_extras_flags.librechat ? "cd /opt/ai-extras && retry sudo docker compose --profile librechat up -d librechat" : "echo 'Skipping LibreChat'"}
-        ${local.ai_extras_flags.comfyui ? "cd /opt/ai-extras && retry sudo docker compose --profile comfyui up -d comfyui" : "echo 'Skipping ComfyUI'"}
-        ${local.ai_extras_flags.stable_diffusion_webui ? "cd /opt/ai-extras && retry sudo docker compose --profile stable-diffusion-webui up -d stable-diffusion-webui" : "echo 'Skipping Stable Diffusion WebUI'"}
-        ${local.ai_extras_flags.whisper_server ? "cd /opt/ai-extras && retry sudo docker compose --profile whisper-server up -d whisper-server" : "echo 'Skipping Whisper server'"}
-        ${local.ai_extras_flags.whisperx ? "cd /opt/ai-extras && retry sudo docker compose --profile whisperx up -d whisperx" : "echo 'Skipping WhisperX'"}
-        ${local.ai_extras_flags.piper_tts ? "cd /opt/ai-extras && retry sudo docker compose --profile piper-tts up -d piper-tts" : "echo 'Skipping Piper TTS'"}
-        ${local.ai_extras_flags.qdrant ? "cd /opt/ai-extras && retry sudo docker compose --profile qdrant up -d qdrant" : "echo 'Skipping Qdrant'"}
-        ${local.ai_extras_flags.milvus ? "cd /opt/ai-extras && retry sudo docker compose --profile milvus up -d milvus" : "echo 'Skipping Milvus'"}
-        ${local.ai_extras_flags.langgraph_studio ? "cd /opt/ai-extras && retry sudo docker compose --profile langgraph-studio up -d langgraph-studio" : "echo 'Skipping LangGraph Studio'"}
-        ${local.ai_extras_flags.crewai ? "cd /opt/ai-extras && retry sudo docker compose --profile crewai up -d crewai-orchestrator" : "echo 'Skipping CrewAI orchestrator'"}
+        ${var.enable_n8n ? "cd /opt/n8n && (sudo docker rm -f n8n || true) && retry sudo docker compose up -d n8n" : "echo 'Skipping n8n'"}
+        ${var.enable_text_generation_webui ? "cd /opt/text-generation-webui && (sudo docker rm -f text-generation-webui || true) && retry sudo docker compose up -d text-generation-webui" : "echo 'Skipping Text Generation WebUI'"}
+        ${var.enable_librechat ? "cd /opt/librechat && (sudo docker rm -f librechat librechat-mongo librechat-redis librechat-meilisearch || true) && retry sudo docker compose up -d" : "echo 'Skipping LibreChat'"}
+        ${var.enable_comfyui ? "cd /opt/comfyui && (sudo docker rm -f comfyui || true) && retry sudo docker compose up -d comfyui" : "echo 'Skipping ComfyUI'"}
+        ${var.enable_stable_diffusion_webui ? "cd /opt/stable-diffusion-webui && (sudo docker rm -f stable-diffusion-webui || true) && retry sudo docker compose up -d stable-diffusion-webui" : "echo 'Skipping Stable Diffusion WebUI'"}
+        ${var.enable_whisper_server ? "cd /opt/whisper-server && (sudo docker rm -f whisper-server || true) && retry sudo docker compose up -d whisper-server" : "echo 'Skipping Whisper server'"}
+        ${var.enable_whisperx ? "cd /opt/whisperx && (sudo docker rm -f whisperx || true) && retry sudo docker compose up -d whisperx" : "echo 'Skipping WhisperX'"}
+        ${var.enable_piper_tts ? "cd /opt/piper-tts && (sudo docker rm -f piper-tts || true) && retry sudo docker compose up -d piper-tts" : "echo 'Skipping Piper TTS'"}
+        ${var.enable_qdrant ? "cd /opt/qdrant && (sudo docker rm -f qdrant || true) && retry sudo docker compose up -d qdrant" : "echo 'Skipping Qdrant'"}
+        ${var.enable_milvus ? "cd /opt/milvus && (sudo docker rm -f milvus || true) && retry sudo docker compose up -d milvus" : "echo 'Skipping Milvus'"}
+        ${var.enable_langgraph_studio ? "cd /opt/langgraph-studio && (sudo docker rm -f langgraph-studio || true) && retry sudo docker compose up -d langgraph-studio" : "echo 'Skipping LangGraph Studio'"}
+        ${var.enable_crewai ? "cd /opt/crewai && (sudo docker rm -f crewai-orchestrator || true) && retry sudo docker compose up -d crewai-orchestrator" : "echo 'Skipping CrewAI orchestrator'"}
 REMOTE_SCRIPT
     EOT
   }

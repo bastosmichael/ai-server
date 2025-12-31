@@ -8,7 +8,6 @@
 # Enable/disable stacks
 enable_portainer = true
 enable_ollama    = false
-enable_ai_extras = false # Master switch to turn on all AI extras profiles
 enable_n8n = false
 enable_text_generation_webui = false
 enable_librechat = false

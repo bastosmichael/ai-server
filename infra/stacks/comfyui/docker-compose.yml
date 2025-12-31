@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  comfyui:
+    image: yanwk/comfyui-boot:cpu
+    container_name: comfyui
+    restart: unless-stopped
+    ports:
+      - "8188:8188"
+    volumes:
+      - comfyui-data:/comfyui
+
+volumes:
+  comfyui-data:

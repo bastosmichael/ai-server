@@ -16,6 +16,18 @@ output "deployed_stacks" {
   description = "List of deployed stacks"
   value = concat(
     var.enable_portainer ? ["portainer"] : [],
-    var.enable_ollama ? ["ollama"] : []
+    var.enable_ollama ? ["ollama"] : [],
+    var.enable_n8n ? ["n8n"] : [],
+    var.enable_text_generation_webui ? ["text-generation-webui"] : [],
+    var.enable_librechat ? ["librechat"] : [],
+    var.enable_comfyui ? ["comfyui"] : [],
+    var.enable_stable_diffusion_webui ? ["stable-diffusion-webui"] : [],
+    var.enable_whisper_server ? ["whisper-server"] : [],
+    var.enable_whisperx ? ["whisperx"] : [],
+    var.enable_piper_tts ? ["piper-tts"] : [],
+    var.enable_qdrant ? ["qdrant"] : [],
+    var.enable_milvus ? ["milvus"] : [],
+    var.enable_langgraph_studio ? ["langgraph-studio"] : [],
+    var.enable_crewai ? ["crewai"] : []
   )
 }

@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  milvus:
+    image: milvusdb/milvus:latest
+    container_name: milvus
+    restart: unless-stopped
+    command: [ "milvus", "run", "standalone" ]
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    volumes:
+      - milvus-data:/var/lib/milvus
+
+volumes:
+  milvus-data:
