@@ -11,7 +11,7 @@ infra/            # Terraform configuration
   outputs.tf      # Deployment outputs
   stacks/         # Docker Compose files grouped by purpose
     # AI & tooling
-    ai-extras/ ollama/ portainer/
+    ollama/ portainer/
 ```
 
 ## Deployment
@@ -25,7 +25,6 @@ infra/            # Terraform configuration
    terraform apply \
      -var="docker_host=ssh://michael@192.168.86.38" \
      -var="enable_portainer=true" \
-     -var="enable_ai_extras=true" \
      -var="enable_text_generation_webui=true" \
      -var="enable_librechat=true" \
      -var="enable_comfyui=true" \
@@ -40,7 +39,7 @@ infra/            # Terraform configuration
      -var="enable_whisperx=true"
    ```
 
-   To deploy AI/LLM tooling, either turn everything on with `-var="enable_ai_extras=true"` or pick specific services such as
+   To deploy AI/LLM tooling, enable the specific services you want, such as
    `-var="enable_text_generation_webui=true"`, `-var="enable_librechat=true"`, `-var="enable_n8n=true"`, or `-var="enable_whisperx=true"`.
 
    **Note:** replace `192.168.86.38` with your actual server IP.
