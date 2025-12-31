@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  stable-diffusion-webui:
+    image: siutin/stable-diffusion-webui-docker:latest-cpu
+    container_name: stable-diffusion-webui
+    restart: unless-stopped
+    ports:
+      - "7861:7860"
+    volumes:
+      - sd-webui:/app/stable-diffusion-webui
+    environment:
+      - COMMANDLINE_ARGS=--listen --skip-torch-cuda-test --no-half --use-cpu all
+      - CLI_ARGS=--listen --skip-torch-cuda-test --no-half --use-cpu all
+    command: [ "bash", "webui.sh", "--listen", "--skip-torch-cuda-test", "--no-half", "--use-cpu", "all" ]
+
+volumes:
+  sd-webui:

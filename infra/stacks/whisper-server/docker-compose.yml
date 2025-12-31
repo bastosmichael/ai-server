@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  whisper-server:
+    image: rhasspy/wyoming-whisper:latest
+    container_name: whisper-server
+    restart: unless-stopped
+    command: [ "--model", "tiny-int8", "--language", "en" ]
+    ports:
+      - "10300:10300"
+    volumes:
+      - whisper-models:/data
+
+volumes:
+  whisper-models:

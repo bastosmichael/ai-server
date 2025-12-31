@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  whisperx:
+    image: ghcr.io/sanchk/whisperx-api:latest
+    container_name: whisperx
+    restart: unless-stopped
+    environment:
+      - PORT=9001
+      - WHISPER_MODEL=small
+    ports:
+      - "9001:9001"
+    volumes:
+      - whisperx-models:/root/.cache/whisperx
+
+volumes:
+  whisperx-models:
