@@ -1,4 +1,4 @@
-# Home Server
+# AI (LLM) Local Server
 
 This project manages a home server running AI-focused Docker stacks using Terraform, along with Portainer for host management.
 
