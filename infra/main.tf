@@ -95,6 +95,35 @@ resource "null_resource" "deploy_stacks" {
           return 0
         }
 
+        # Wait for a container to enter a running (or paused) state
+        function wait_for_container_ready {
+          local name=$1
+          local timeout=300
+          local interval=5
+          local waited=0
+
+          echo "Waiting for container $name to be running..."
+          while [ $waited -lt $timeout ]; do
+            status=$(sudo docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null || echo "missing")
+
+            if [ "$status" = "running" ] || [ "$status" = "paused" ]; then
+              echo "$name is running (status: $status)"
+              return 0
+            fi
+
+            if [ "$status" = "exited" ] || [ "$status" = "dead" ]; then
+              echo "$name reached status $status before becoming ready"
+              return 1
+            fi
+
+            sleep $interval
+            waited=$((waited + interval))
+          done
+
+          echo "Timed out waiting for $name to be running"
+          return 1
+        }
+
         # Restart DNS resolver to fix "server misbehaving" errors
         sudo systemctl restart systemd-resolved || true
 
@@ -127,6 +156,22 @@ resource "null_resource" "deploy_stacks" {
 
         # Move files to correct locations
         sudo mv /tmp/portainer.docker-compose.yml /opt/portainer/docker-compose.yml
+
+        # Track which containers should be paused after they finish starting
+        containers_to_pause=()
+        ${var.enable_ollama ? "containers_to_pause+=(\"ollama\" \"open-webui\")" : ""}
+        ${var.enable_n8n ? "containers_to_pause+=(\"n8n\")" : ""}
+        ${var.enable_text_generation_webui ? "containers_to_pause+=(\"text-generation-webui\")" : ""}
+        ${var.enable_librechat ? "containers_to_pause+=(\"librechat\" \"librechat-mongo\" \"librechat-redis\" \"librechat-meilisearch\")" : ""}
+        ${var.enable_comfyui ? "containers_to_pause+=(\"comfyui\")" : ""}
+        ${var.enable_stable_diffusion_webui ? "containers_to_pause+=(\"stable-diffusion-webui\")" : ""}
+        ${var.enable_whisper_server ? "containers_to_pause+=(\"whisper-server\")" : ""}
+        ${var.enable_whisperx ? "containers_to_pause+=(\"whisperx\")" : ""}
+        ${var.enable_piper_tts ? "containers_to_pause+=(\"piper-tts\")" : ""}
+        ${var.enable_qdrant ? "containers_to_pause+=(\"qdrant\")" : ""}
+        ${var.enable_milvus ? "containers_to_pause+=(\"milvus\")" : ""}
+        ${var.enable_langgraph_studio ? "containers_to_pause+=(\"langgraph-studio\")" : ""}
+        ${var.enable_crewai ? "containers_to_pause+=(\"crewai-orchestrator\")" : ""}
         
         # Configure Ollama with GPU support if NVIDIA GPU is present
         if command -v nvidia-smi &> /dev/null; then
@@ -189,6 +234,20 @@ EOF
         ${var.enable_milvus ? "cd /opt/milvus && (sudo docker rm -f milvus || true) && retry sudo docker compose up -d milvus" : "echo 'Skipping Milvus'"}
         ${var.enable_langgraph_studio ? "cd /opt/langgraph-studio && (sudo docker rm -f langgraph-studio || true) && retry sudo docker compose up -d langgraph-studio" : "echo 'Skipping LangGraph Studio'"}
         ${var.enable_crewai ? "cd /opt/crewai && (sudo docker rm -f crewai-orchestrator || true) && retry sudo docker compose up -d crewai-orchestrator" : "echo 'Skipping CrewAI orchestrator'"}
+
+        # Wait for all managed containers to finish initial startup before pausing them
+        if [ ${#containers_to_pause[@]} -gt 0 ]; then
+          for container in "${containers_to_pause[@]}"; do
+            wait_for_container_ready "$container"
+          done
+
+          for container in "${containers_to_pause[@]}"; do
+            if [ "$container" != "portainer" ]; then
+              echo "Pausing $container to reduce resource usage while keeping Portainer active..."
+              sudo docker pause "$container" || true
+            fi
+          done
+        fi
 REMOTE_SCRIPT
     EOT
   }
