@@ -236,12 +236,12 @@ EOF
         ${var.enable_crewai ? "cd /opt/crewai && (sudo docker rm -f crewai-orchestrator || true) && retry sudo docker compose up -d crewai-orchestrator" : "echo 'Skipping CrewAI orchestrator'"}
 
         # Wait for all managed containers to finish initial startup before pausing them
-        if [ ${#containers_to_pause[@]} -gt 0 ]; then
-          for container in "${containers_to_pause[@]}"; do
+        if [ $${#containers_to_pause[@]} -gt 0 ]; then
+          for container in "$${containers_to_pause[@]}"; do
             wait_for_container_ready "$container"
           done
 
-          for container in "${containers_to_pause[@]}"; do
+          for container in "$${containers_to_pause[@]}"; do
             if [ "$container" != "portainer" ]; then
               echo "Pausing $container to reduce resource usage while keeping Portainer active..."
               sudo docker pause "$container" || true
