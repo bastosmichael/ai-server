@@ -87,3 +87,15 @@ variable "enable_whisperx" {
   type        = bool
   default     = false
 }
+
+variable "enable_openclaw" {
+  description = "Enable Open Claw (formerly ClawDBot) deployment"
+  type        = bool
+  default     = false
+}
+
+variable "enable_zeroclaw" {
+  description = "Enable ZeroClaw deployment"
+  type        = bool
+  default     = false
+}

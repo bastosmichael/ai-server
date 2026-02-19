@@ -20,3 +20,5 @@ enable_qdrant = false
 enable_milvus = false
 enable_langgraph_studio = false
 enable_crewai = false
+enable_openclaw = false
+enable_zeroclaw = false

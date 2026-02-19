@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  zeroclaw:
+    image: ghcr.io/openclaw/zeroclaw:latest
+    container_name: zeroclaw
+    restart: unless-stopped
+    environment:
+      - PORT=8091
+    ports:
+      - "8091:8091"
+    volumes:
+      - zeroclaw-data:/app/data
+
+volumes:
+  zeroclaw-data:

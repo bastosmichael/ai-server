@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
+    restart: unless-stopped
+    environment:
+      - PORT=8090
+    ports:
+      - "8090:8090"
+    volumes:
+      - openclaw-data:/app/data
+
+volumes:
+  openclaw-data:

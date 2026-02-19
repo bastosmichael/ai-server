@@ -40,8 +40,8 @@ resource "null_resource" "bootstrap_docker" {
       # "sudo usermod -aG docker $USER || true",
 
       # Create stack dirs
-      "sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai",
-      "sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai || true",
+      "sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw",
+      "sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw || true",
     ]
   }
 }
@@ -71,6 +71,8 @@ resource "null_resource" "deploy_stacks" {
       ${var.enable_milvus ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/milvus/docker-compose.yml\" \"$USER@$HOST:/tmp/milvus.docker-compose.yml\"" : ""}
       ${var.enable_langgraph_studio ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/langgraph-studio/docker-compose.yml\" \"$USER@$HOST:/tmp/langgraph-studio.docker-compose.yml\"" : ""}
       ${var.enable_crewai ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/crewai/docker-compose.yml\" \"$USER@$HOST:/tmp/crewai.docker-compose.yml\"" : ""}
+      ${var.enable_openclaw ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/openclaw/docker-compose.yml\" \"$USER@$HOST:/tmp/openclaw.docker-compose.yml\"" : ""}
+      ${var.enable_zeroclaw ? "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \"${path.module}/stacks/zeroclaw/docker-compose.yml\" \"$USER@$HOST:/tmp/zeroclaw.docker-compose.yml\"" : ""}
 
       # Execute Remote Setup via SSH
       ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$USER@$HOST" 'bash -s' <<'REMOTE_SCRIPT'
@@ -128,8 +130,8 @@ resource "null_resource" "deploy_stacks" {
         sudo systemctl restart systemd-resolved || true
 
         # Ensure directories exist (in case bootstrap didn't run or new ones matched)
-        sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai
-        sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai || true
+        sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw
+        sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw || true
 
         # Configure Firewall (UFW)
         echo "Configuring Firewall..."
@@ -152,6 +154,8 @@ resource "null_resource" "deploy_stacks" {
         ${var.enable_langgraph_studio ? "sudo ufw allow 8123/tcp" : ""}
         ${var.enable_crewai ? "sudo ufw allow 8001/tcp" : ""}
         ${var.enable_whisperx ? "sudo ufw allow 9001/tcp" : ""}
+        ${var.enable_openclaw ? "sudo ufw allow 8090/tcp" : ""}
+        ${var.enable_zeroclaw ? "sudo ufw allow 8091/tcp" : ""}
         sudo ufw --force enable || true
 
         # Move files to correct locations
@@ -172,6 +176,8 @@ resource "null_resource" "deploy_stacks" {
         ${var.enable_milvus ? "containers_to_pause+=(\"milvus\")" : ""}
         ${var.enable_langgraph_studio ? "containers_to_pause+=(\"langgraph-studio\")" : ""}
         ${var.enable_crewai ? "containers_to_pause+=(\"crewai-orchestrator\")" : ""}
+        ${var.enable_openclaw ? "containers_to_pause+=(\"openclaw\")" : ""}
+        ${var.enable_zeroclaw ? "containers_to_pause+=(\"zeroclaw\")" : ""}
         
         # Configure Ollama with GPU support if NVIDIA GPU is present
         if command -v nvidia-smi &> /dev/null; then
@@ -218,6 +224,8 @@ EOF
         ${var.enable_milvus ? "sudo mv /tmp/milvus.docker-compose.yml /opt/milvus/docker-compose.yml" : ""}
         ${var.enable_langgraph_studio ? "sudo mv /tmp/langgraph-studio.docker-compose.yml /opt/langgraph-studio/docker-compose.yml" : ""}
         ${var.enable_crewai ? "sudo mv /tmp/crewai.docker-compose.yml /opt/crewai/docker-compose.yml" : ""}
+        ${var.enable_openclaw ? "sudo mv /tmp/openclaw.docker-compose.yml /opt/openclaw/docker-compose.yml" : ""}
+        ${var.enable_zeroclaw ? "sudo mv /tmp/zeroclaw.docker-compose.yml /opt/zeroclaw/docker-compose.yml" : ""}
 
         # Deploy Stacks
         ${var.enable_portainer ? "cd /opt/portainer && (sudo docker rm -f portainer || true) && retry sudo docker compose up -d" : "echo 'Skipping Portainer'"}
@@ -234,6 +242,8 @@ EOF
         ${var.enable_milvus ? "cd /opt/milvus && (sudo docker rm -f milvus || true) && retry sudo docker compose up -d milvus" : "echo 'Skipping Milvus'"}
         ${var.enable_langgraph_studio ? "cd /opt/langgraph-studio && (sudo docker rm -f langgraph-studio || true) && retry sudo docker compose up -d langgraph-studio" : "echo 'Skipping LangGraph Studio'"}
         ${var.enable_crewai ? "cd /opt/crewai && (sudo docker rm -f crewai-orchestrator || true) && retry sudo docker compose up -d crewai-orchestrator" : "echo 'Skipping CrewAI orchestrator'"}
+        ${var.enable_openclaw ? "cd /opt/openclaw && (sudo docker rm -f openclaw || true) && retry sudo docker compose up -d openclaw" : "echo 'Skipping Open Claw'"}
+        ${var.enable_zeroclaw ? "cd /opt/zeroclaw && (sudo docker rm -f zeroclaw || true) && retry sudo docker compose up -d zeroclaw" : "echo 'Skipping ZeroClaw'"}
 
         # Wait for all managed containers to finish initial startup before pausing them
         if [ $${#containers_to_pause[@]} -gt 0 ]; then

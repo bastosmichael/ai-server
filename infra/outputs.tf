@@ -28,6 +28,8 @@ output "deployed_stacks" {
     var.enable_qdrant ? ["qdrant"] : [],
     var.enable_milvus ? ["milvus"] : [],
     var.enable_langgraph_studio ? ["langgraph-studio"] : [],
-    var.enable_crewai ? ["crewai"] : []
+    var.enable_crewai ? ["crewai"] : [],
+    var.enable_openclaw ? ["openclaw"] : [],
+    var.enable_zeroclaw ? ["zeroclaw"] : []
   )
 }
