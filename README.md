@@ -36,11 +36,13 @@ infra/            # Terraform configuration
      -var="enable_langgraph_studio=true" \
      -var="enable_crewai=true" \
      -var="enable_n8n=true" \
-     -var="enable_whisperx=true"
+     -var="enable_whisperx=true" \
+     -var="enable_openclaw=true" \
+     -var="enable_zeroclaw=true"
    ```
 
    To deploy AI/LLM tooling, enable the specific services you want, such as
-   `-var="enable_text_generation_webui=true"`, `-var="enable_librechat=true"`, `-var="enable_n8n=true"`, or `-var="enable_whisperx=true"`.
+   `-var="enable_text_generation_webui=true"`, `-var="enable_librechat=true"`, `-var="enable_n8n=true"`, `-var="enable_whisperx=true"`, `-var="enable_openclaw=true"`, or `-var="enable_zeroclaw=true"`.
 
    **Note:** replace `192.168.86.38` with your actual server IP.
 
@@ -59,6 +61,8 @@ infra/            # Terraform configuration
    * **Milvus standalone:** `http://<server-ip>:9091`
    * **LangGraph Studio:** `http://<server-ip>:8123`
    * **CrewAI orchestrator:** `http://<server-ip>:8001`
+   * **Open Claw (formerly ClawDBot):** `http://<server-ip>:8090`
+   * **ZeroClaw:** `http://<server-ip>:8091`
 
    Terraform's remote bootstrap automatically opens UFW for HTTP/HTTPS (80/443), Open WebUI (3000), and the ports associated with any services you enable so they bind to `0.0.0.0` and remain reachable externally.
 
@@ -80,6 +84,8 @@ infra/            # Terraform configuration
 * **Milvus:** Scalable vector database with gRPC/HTTP APIs.
 * **LangGraph Studio:** Visual editor for LangGraph agents that can call Ollama by default.
 * **CrewAI orchestrator:** Backend for coordinating multi-agent LLM workflows.
+* **Open Claw (formerly ClawDBot):** Self-hosted Open Claw service for clawdbot-compatible tooling.
+* **ZeroClaw:** Companion ZeroClaw service for Open Claw workflows.
 
 ## System Prerequisites
 Before running Terraform, you must ensure:
