@@ -14,7 +14,7 @@ provider "null" {}
 resource "null_resource" "bootstrap_docker" {
   triggers = {
     docker_host   = var.docker_host # Ensures re-bootstrap on host migration
-    daemon_config = "v1"           # Force re-bootstrap on configuration changes
+    daemon_config = "v1"            # Force re-bootstrap on configuration changes
   }
   provisioner "local-exec" {
     command = <<EOT
