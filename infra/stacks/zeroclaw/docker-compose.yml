@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   zeroclaw:
-    image: ghcr.io/openclaw/zeroclaw:latest
+    image: ghcr.io/zeroclaw-labs/zeroclaw:latest
     container_name: zeroclaw
     restart: unless-stopped
     environment:

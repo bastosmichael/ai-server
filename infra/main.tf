@@ -12,37 +12,39 @@ terraform {
 provider "null" {}
 
 resource "null_resource" "bootstrap_docker" {
-  connection {
-    type = "ssh"
-    host = replace(var.docker_host, "ssh://michael@", "") # Extract IP from docker_host string
-    user = "michael"
-    # Agent is used automatically
+  triggers = {
+    docker_host   = var.docker_host # Ensures re-bootstrap on host migration
+    daemon_config = "v1"           # Force re-bootstrap on configuration changes
   }
+  provisioner "local-exec" {
+    command = <<EOT
+      HOST="${replace(var.docker_host, "ssh://michael@", "")}"
+      USER="michael"
+      
+      # Use system ssh to avoid terraform ssh agent issues
+      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$USER@$HOST" 'bash -s' <<'REMOTE_SCRIPT'
+        # Fix the broken apt state from potential previous manual attempts
+        sudo rm -f /etc/apt/sources.list.d/docker.list
 
-  provisioner "remote-exec" {
-    inline = [
-      # Basic deps
-      # "sudo apt-get update -y",
-      # "sudo apt-get install -y ca-certificates curl gnupg lsb-release",
+        # Install Docker using the official convenience script (robust across Ubuntu versions)
+        curl -fsSL https://get.docker.com | sh
+        
+        # Allow current user to run docker commands without sudo
+        sudo usermod -aG docker michael
 
-      # Install Docker Engine + compose plugin (official repo)
-      # "sudo install -m 0755 -d /etc/apt/keyrings",
-      # "sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc",
-      # "sudo chmod a+r /etc/apt/keyrings/docker.asc",
-      # "sudo bash -lc 'source /etc/os-release; cat > /etc/apt/sources.list.d/docker.sources <<EOF\nTypes: deb\nURIs: https://download.docker.com/linux/ubuntu\nSuites: $${UBUNTU_CODENAME:-$VERSION_CODENAME}\nComponents: stable\nSigned-By: /etc/apt/keyrings/docker.asc\nEOF'",
-      # "sudo apt-get update -y",
-      # "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+        # Configure Docker default address pools (fixes 'all predefined address pools have been fully subnetted')
+        # This is CRITICAL for environments with 30+ Docker Compose stacks
+        echo '{"default-address-pools":[{"base":"10.0.0.0/8","size":24}]}' | sudo tee /etc/docker/daemon.json > /dev/null
+        sudo systemctl restart docker
 
-      # Enable docker at boot
-      # "sudo systemctl enable --now docker",
+        # Restart DNS resolver (fixes "server misbehaving" issues)
+        sudo systemctl restart systemd-resolved || true
 
-      # Ensure current user is in docker group (requires relogin, but good for future)
-      # "sudo usermod -aG docker $USER || true",
-
-      # Create stack dirs
-      "sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw",
-      "sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw || true",
-    ]
+        # Create stack dirs
+        sudo mkdir -p /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw
+        sudo chown -R 1000:1000 /opt/portainer /opt/ollama /opt/n8n /opt/text-generation-webui /opt/librechat /opt/comfyui /opt/stable-diffusion-webui /opt/whisper-server /opt/whisperx /opt/piper-tts /opt/qdrant /opt/milvus /opt/langgraph-studio /opt/crewai /opt/openclaw /opt/zeroclaw || true
+REMOTE_SCRIPT
+    EOT
   }
 }
 
